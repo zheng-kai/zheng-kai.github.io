@@ -13,16 +13,16 @@
 <meta property="og:site_name" content="Hexo">
 <meta property="og:description" content="​	实现超分辨率重建的算法有很多，包括经典的基于插值的方法，如双立方插值。而基于机器学习的算法SRCNN可以达到比插值更好的效果。">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://zheng-kai.github.io/.com//srcnn_net.png">
-<meta property="og:image" content="https://zheng-kai.github.io/.com//bird_GT.bmp">
-<meta property="og:image" content="https://zheng-kai.github.io/.com//bird_GT_zoom3.bmp">
+<meta property="og:image" content="https://zheng-kai.github.io/.io//srcnn_net.png">
+<meta property="og:image" content="https://zheng-kai.github.io/.io//bird_GT.bmp">
+<meta property="og:image" content="https://zheng-kai.github.io/.io//bird_GT_zoom3.bmp">
 <meta property="article:published_time" content="2021-01-20T07:45:36.000Z">
-<meta property="article:modified_time" content="2024-03-24T04:06:17.420Z">
+<meta property="article:modified_time" content="2024-03-24T04:11:54.108Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="图像处理">
 <meta property="article:tag" content="卷积神经网络">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://zheng-kai.github.io/.com//srcnn_net.png">
+<meta name="twitter:image" content="https://zheng-kai.github.io/.io//srcnn_net.png">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -117,7 +117,7 @@
 <p>​	该卷积层将会把上一层的$n_2$个特征映射为高分辨率图像的Y通道。该层卷积核大小为$f_3*f_3$</p>
 </li>
 </ol>
-<p><img src="/.com//srcnn_net.png"></p>
+<p><img src="/.io//srcnn_net.png"></p>
 <h3 id="图片数据的预处理"><a href="#图片数据的预处理" class="headerlink" title="图片数据的预处理"></a>图片数据的预处理</h3><p>训练集和测试集的数据需要根据算法从图片中采集。</p>
 <p>因为进行卷积操作，输出的数据矩阵会比输入矩阵的维度小，所以标签数据要比上采样图像小<code>(f1//2 + f2//2 + f3//2)*2</code>。</p>
 <ul>
@@ -152,10 +152,10 @@
 <p>​	虽然模型的效果并不如二次立方插值，但是PSNR值在30以上，还算可以接受吧..</p>
 <ul>
 <li><p>原图</p>
-<p><img src="/.com//bird_GT.bmp" alt="bird_GT"></p>
+<p><img src="/.io//bird_GT.bmp" alt="bird_GT"></p>
 </li>
 <li><p>放大3倍得到的图片</p>
-<p><img src="/.com//bird_GT_zoom3.bmp" alt="bird_GT_zoom3"></p>
+<p><img src="/.io//bird_GT_zoom3.bmp" alt="bird_GT_zoom3"></p>
 </li>
 </ul>
 <h2 id="问题思考"><a href="#问题思考" class="headerlink" title="问题思考"></a>问题思考</h2><p>​	因为看论文中模型得到的结果还是很不错的，PSNR值能达到32.26，但是我的模型效果就没有那么好，最好的模型只有30.97，还不如双三次插值的效果好。分析影响模型效果的因素有：$n_1,n_2$的选取，模型训练的轮数，数据集的大小。虽然该神经网络模型只有三层，但由于没有找到适合本机的支持gpu的pytorch版本，训练模型使用cpu进行计算，速度很慢。为了减少时长，我并没有使用论文中提供的全部91张图片作为训练数据，也并没有采用论文中说的$n_1&#x3D;64,n_2&#x3D;32$来训练，而是减半。训练的轮数也并没有很多。可能这就是我的模型效果不好的原因吧。因为随着训练轮数的增加，PSNR数值的增长会变慢，所以为了得到论文中那样的结果，可能需要使用91张照片的全数据集训练上百轮或千轮才能得到。</p>
@@ -252,7 +252,7 @@
           </li>
         
           <li>
-            <a href="/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/">数据流分析</a>
+            <a href="/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/">数据流分析-入门</a>
           </li>
         
           <li>

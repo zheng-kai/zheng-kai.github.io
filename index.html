@@ -138,7 +138,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/">数据流分析</a>
+      <a class="p-name article-title" href="/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/">数据流分析-入门</a>
     </h1>
   
 
@@ -146,121 +146,16 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h2 id="静态分析"><a href="#静态分析" class="headerlink" title="静态分析"></a>静态分析</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p><strong>静态分析（Static Analysis）</strong> 是指在实际运行程序P之前，通过分析静态程序P本身来推测程序的行为，并判断程序是否满足某些特定的 <strong>性质（Property）</strong></p>
-<blockquote>
-<p><strong>性质（Property）</strong></p>
-<ul>
-<li>程序P是否会产生私有信息泄漏（Private Information Leak），或者说是否存在访问控制漏洞（Access Control Venerability）；</li>
-<li>程序P是否有空指针的解引用(Null Pointer Dereference)操作，更一般的，是否会发生不可修复的运行时错误（Runtime Error）；</li>
-<li>程序P中的类型转换（Type Cast）是否都是安全的；</li>
-<li>程序P中是否存在可能无法满足的断言（Assersion Error）；</li>
-<li>程序P中是否存在死代码（Dead Code, 即控制流在任何情况下都无法到达的代码）；</li>
-</ul>
-</blockquote>
-<h3 id="完美的静态分析"><a href="#完美的静态分析" class="headerlink" title="完美的静态分析"></a>完美的静态分析</h3><p>满足以下两个条件：</p>
-<ul>
-<li><strong>完整性（Soundness）</strong>：真相一定在S给出的答案中；</li>
-<li><strong>正确性（Completeness）</strong>：S给出的答案一定在真相中；</li>
-</ul>
-<h3 id="Rice定理（Rice-Theorem）"><a href="#Rice定理（Rice-Theorem）" class="headerlink" title="Rice定理（Rice Theorem）"></a>Rice定理（Rice Theorem）</h3><p>对于使用 <strong>递归可枚举（Recursively Enumerable）</strong> 的语言描述的程序，其任何 <strong>有价值（Non-trivial）</strong> 的性质都是<strong>无法完美确定</strong>的。</p>
-<ul>
-<li>关于递归可枚举，其含义是存在某个计算函数（可以是图灵机），能够将这种语言中的所有合法字符串枚举出来。这个概念有些抽象，不必深究，暂时只需要知道，目前我们所能想到的所有的编程语言都是递归可枚举语言。</li>
-<li>关于有价值，我们认为，如果一种性质是所有的程序都满足的或者都不满足的，那么这种性质是没有价值的，除此之外的性质是有价值的。简单理解就是和程序运行时的行为相关的，让我们感兴趣的性质，就是有价值的性质。</li>
-</ul>
-<h3 id="妥协的静态分析"><a href="#妥协的静态分析" class="headerlink" title="妥协的静态分析"></a>妥协的静态分析</h3><ul>
-<li><strong>完整性（Soundness）</strong>&#x3D;&gt; 饱和估计（Overapproximate） &#x3D;&gt; 分析结果存在False Positive &#x3D;&gt; 这种分析称为Must Analysis</li>
-<li><strong>正确性（Completeness）</strong>&#x3D;&gt; 保守估计（Under-approximation）&#x3D;&gt; False Negative &#x3D;&gt; May Analysis</li>
-</ul>
-<p><img src="/.%5Csound_completeness.png" alt="sound_completeness"></p>
-<h2 id="数据流分析"><a href="#数据流分析" class="headerlink" title="数据流分析"></a>数据流分析</h2><p><strong>数据流分析（Data Flow Analysis, DFA）</strong> 是指分析数据在程序中是怎样流动的。后文将详细介绍如下内容：</p>
-<ul>
-<li><p>分析的对象：数据&#x3D;基于抽象的特定数据</p>
-</li>
-<li><p>分析的基础：控制流图CFG</p>
-</li>
-<li><p>分析的行为：流动。不同的流动使用不同的处理方式。</p>
-<ul>
-<li>在CFG的点（Node）内流动，即程序基块内部的数据流；&#x3D;&gt; 转移函数（Transfer Function）</li>
-<li>在CFG的边（Edge）上流动，即由基块间控制流触发的数据流。&#x3D;&gt; 控制流处理方法（Control-Flow Handlings），通常称为汇集操作</li>
-</ul>
-</li>
-<li><p>分析的方式：安全估计<strong>（Safe-Approximation）</strong></p>
-<ul>
-<li>饱和估计（Over-Approximation）&#x3D;&gt; <strong>可能性分析（May Analysis）</strong></li>
-<li>保守估计（Under-Approximation）&#x3D;&gt; <strong>必然性分析（Must Analysis）</strong></li>
-</ul>
-<blockquote>
-<p>根据需求确定哪种是安全的。例如，编译优化通常使用必然性分析，如果优化了不应该优化的内容会导致程序错误。</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="数据流分析的主要内容"><a href="#数据流分析的主要内容" class="headerlink" title="数据流分析的主要内容"></a>数据流分析的主要内容</h3><ol>
-<li>数据抽象（Data Abstraction）</li>
-<li>流安全估计策略——饱和估计或者保守估计</li>
-<li>转移函数（Transfer Function）、控制流处理方法（Control-Flow Handlings）</li>
-</ol>
-<h3 id="数据抽象"><a href="#数据抽象" class="headerlink" title="数据抽象"></a>数据抽象</h3><p>程序中的值有很多，但我们关心的只有和Non-trivial性质相关的值。比如考虑除0错误，只需要判断变量的值是否为0，其他的我们并不需要关心。</p>
-<p>《举例：区分程序中所有变量的正负情况》</p>
-<p>如下图，将变量值抽象成几类符号。然而，这样简单的抽象并不能解决全部的情况，对于未知的数据，我们定义为Unknown.</p>
-<p><img src="/.%5Cdata_abstract.png" alt="data_abstract"></p>
-<h3 id="中间表示"><a href="#中间表示" class="headerlink" title="中间表示"></a>中间表示</h3><p>中间表示通常作为静态分析的语言基础，便于进行分析，便于构建控制流图。</p>
-<h4 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h4><ul>
-<li>低层次，和机器代码相接近</li>
-<li>通常和具体的语言无关，主要和运行语言的机器（物理机或虚拟机）有关</li>
-<li>简单通用</li>
-<li>包含程序的控制流信息</li>
-</ul>
-<h3 id="控制流图"><a href="#控制流图" class="headerlink" title="控制流图"></a>控制流图</h3><p><img src="/.%5Ccfg-demo.2a9e5799.png" alt="cfg-demo.2a9e5799"></p>
-<p>控制流图由Basic Block作为结点，以跳转语句作为边。 </p>
-<h4 id="基块Basic-Block"><a href="#基块Basic-Block" class="headerlink" title="基块Basic Block"></a>基块Basic Block</h4><p>基块就是满足如下性质的最长指令序列：</p>
-<ul>
-<li>程序的控制流只能从首指令进入</li>
-<li>程序的控制流只能从尾指令流出</li>
-</ul>
-<h3 id="数据流分析-过程内分析"><a href="#数据流分析-过程内分析" class="headerlink" title="数据流分析 (过程内分析)"></a>数据流分析 (过程内分析)</h3><h4 id="转移函数（Transfer-Function）"><a href="#转移函数（Transfer-Function）" class="headerlink" title="转移函数（Transfer Function）"></a>转移函数（Transfer Function）</h4><p>转移函数定义了如何计算不同的语句的抽象数据的值。</p>
-<p>在实际应用中，通常使用集合表示抽象数据，集合的内容表示了抽象数据的状态。在目标语句之前，程序的数据状态表示为In，在目标语句之后，程序的数据状态表示为Out。</p>
-<p>对于语句S，转移函数 f 表示为<br>$$<br>Out[S] &#x3D; f_S(In[S])<br>$$<br>《举例：区分程序中所有变量的正负情况》</p>
-<p>如下图所示，为针对该问题设计的转移函数。对于加法运算，如果两个正数变量相加，被赋值的变量也是正数。根据抽象出的数据状态，我们可以枚举出加法运算的所有情况，从而构造出加法运算的转移函数，以此类推构造出除法。</p>
-<p><img src="/.%5Ctransfor_func.png" alt="transfor_func"></p>
-<p>如下图所示为一个特定语句的分析样例。对于<code>a=x+y</code>语句，有<code>In = (&#39;x&#39;:&#39;+&#39;,&#39;y&#39;:&#39;+&#39;)</code>，可以推断出<code>a</code>一定为正数，所以计算出<code>Out = (&#39;x&#39;:&#39;+&#39;,&#39;y&#39;:&#39;+&#39;,&#39;a&#39;:&#39;+&#39;)</code></p>
-<p><img src="/.%5Ctransfor_func_exmp.png" alt="transfor_func_exmp"></p>
-<h4 id="控制流处理方法（Control-Flow-Handlings）"><a href="#控制流处理方法（Control-Flow-Handlings）" class="headerlink" title="控制流处理方法（Control-Flow Handlings）"></a>控制流处理方法（Control-Flow Handlings）</h4><p>定义了如何计算控制流交汇的抽象数据的值。定义交汇时的运算为<strong>汇集</strong> (meet，符号记作<code>∧</code>)。</p>
-<p>对于一条语句而言，控制流的流向通常有以下几种情况：</p>
-<ul>
-<li>输入为1条，输出为1条。这种情况为Basic Block内部的语句流向。</li>
-<li>输入为1条，输出为2条。这种情况为分支语句，导致控制流分叉。</li>
-<li>输入为多条，输出为1条。这种情况为跳转语句的指向语句，需要进行汇集操作。</li>
-</ul>
-<p>汇集操作分为两类：</p>
-<ul>
-<li>并集。通常会导致分析结果的饱和估计（Over-Approximation），最终导致May Analyze</li>
-<li>交集。通常会导致分析结果的保守估计（Under-Approximation），最终导致Must Analyze</li>
-</ul>
-<p>《举例：区分程序中所有变量的正负情况》</p>
-<p>以下图的分析为例，对于分支导致y出现正负两种状态，在汇集时如果使用交集，则将y定义为Undefine（对应空）。如果使用并集，则将y定义为Unknown（对应全）</p>
-<p><img src="/.%5Cmeet_exmp2.png" alt="meet_exmp2"></p>
-<p>处理方法根据分析时采用的数据流向分为两类：</p>
-<ul>
-<li>正向分析：符合正常的程序执行顺序，计算函数满足：<code>In[S] = ∧ Out[S_pre]</code></li>
-<li>反向分析：与正常的程序执行顺序相反，计算函数满足：<code>Out[S] = ∧ In[S_suc]</code></li>
-</ul>
-<h3 id="讨论"><a href="#讨论" class="headerlink" title="讨论"></a>讨论</h3><p>静态分析具有很多分析方法和实际应用，而数据流分析只是静态分析的一小部分。</p>
-<p>静态分析还有很多其他的分析方式：控制流分析、污点分析、无效代码分析等等</p>
-<p>还有很多应用场景：</p>
-<ol>
-<li>编译器优化：死亡代码消除，代码移动</li>
-<li>程序可靠性：空指针引用，内存泄露</li>
-<li>程序安全性：隐私信息泄露，注入攻击</li>
-<li>系统理解：IDE调用层次结构，类型指示</li>
-</ol>
-<p>对于软件分析而言，静态分析也只是其中一类，并且因为静态带来的局限性，其存在很多无法解决的问题。另一种分析方式，动态分析，则通过执行程序的方式，获取动态信息，并以此提高分析的准确性。</p>
-<p>同样，动态分析也有很多分析方式：指针分析、符号执行等等。</p>
-<p>这里不在过多赘述，可以移步到 <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1b7411K7P4/">南京大学 李樾、谭添 老师在b站发布的软件分析课程视频</a>. 也是本文作者的学习视频（文中用了很多视频中的图）</p>
-
+        <p><strong>静态分析（Static Analysis）</strong> 是指在实际运行程序P之前，通过分析静态程序P本身来推测程序的行为，并判断程序是否满足某些特定的 <strong>性质（Property）</strong>。数据流分析作为静态分析的一种，可以解决程序分析中的一些问题，如存货变量分析。</p>
+        
+          <p class="article-more-link">
+            <a href="/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://zheng-kai.github.io/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/" data-id="clu4zoslk0010o4v2bkmd0puz" data-title="数据流分析" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://zheng-kai.github.io/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/" data-id="clu4zoslk0010o4v2bkmd0puz" data-title="数据流分析-入门" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
@@ -701,7 +596,7 @@
           </li>
         
           <li>
-            <a href="/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/">数据流分析</a>
+            <a href="/2023/04/24/%E6%95%B0%E6%8D%AE%E6%B5%81%E5%88%86%E6%9E%90/">数据流分析-入门</a>
           </li>
         
           <li>
