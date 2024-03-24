@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>超分辨-SRCNN | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="​	实现超分辨率重建的算法有很多，包括经典的基于插值的方法，如双立方插值。而基于机器学习的算法SRCNN可以达到比插值更好的效果。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="超分辨-SRCNN">
+<meta property="og:url" content="http://example.com/2021/01/20/SRCNN/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="​	实现超分辨率重建的算法有很多，包括经典的基于插值的方法，如双立方插值。而基于机器学习的算法SRCNN可以达到比插值更好的效果。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/srcnn_net.png">
+<meta property="og:image" content="http://example.com/bird_GT.bmp">
+<meta property="og:image" content="http://example.com/bird_GT_zoom3.bmp">
+<meta property="article:published_time" content="2021-01-20T07:45:36.000Z">
+<meta property="article:modified_time" content="2021-01-20T09:18:50.000Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="图像处理">
+<meta property="article:tag" content="卷积神经网络">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/srcnn_net.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-SRCNN" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/01/20/SRCNN/" class="article-date">
+  <time class="dt-published" datetime="2021-01-20T07:45:36.000Z" itemprop="datePublished">2021-01-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      超分辨-SRCNN
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>​	实现超分辨率重建的算法有很多，包括经典的基于插值的方法，如双立方插值。而基于机器学习的算法SRCNN可以达到比插值更好的效果。</p>
+<span id="more"></span>
+
+<h2 id="原理阐述"><a href="#原理阐述" class="headerlink" title="原理阐述"></a>原理阐述</h2><p>​	使用卷积神经网络训练模型，将上采样图像转化为高分辨率图像。其中上采样图像使用双立方插值对原图进行放大得到，而转化成的高分辨率图像虽然和上采样图像大小一样，但比三次立方插值放大得到的图像清晰，因此SRCNN成为了比双立方插值效果更好的方法。</p>
+<p>​	假设存在一种模糊图像到高分辨率图像的映射关系，该神经网络的目的就是求解出这个映射关系。因为图像通常使用矩阵表示，不同的图像对应着不同的矩阵，图像的特点可以使用矩阵的特征表示。而图像千变万化，如果使用小矩阵来拆解图像，使用多个小矩阵来表示一个图像的话，那么所有的图像都可以用这些小矩阵来表示了。所以该神经网络只要可以对小矩阵进行处理，将其映射成高分辨率的小矩阵，即可将图像从模糊映射成高清。因为双立方插值放大的图像并不清晰，结合该方法，即可实现得到放大的清晰图片的效果。</p>
+<h3 id="网络结构"><a href="#网络结构" class="headerlink" title="网络结构"></a>网络结构</h3><p>SRCNN网络分为三层，每层的功能如下：</p>
+<ol>
+<li><p>提取和表示图像块：</p>
+<p>​	该卷积层的输入数据为拆分好的图像块的Y通道。</p>
+<p>​	该层负责提取图像块的特征。特征个数为$n_1$，该层卷积核大小为$f_1*f_1$</p>
+</li>
+<li><p>非线性映射</p>
+<p>​	该卷积层将上一层的$n_1$个特征进行非线性映射，映射为$n_2$个特征，该层卷积核大小为$f_2*f_2$</p>
+</li>
+<li><p>重建</p>
+<p>​	该卷积层将会把上一层的$n_2$个特征映射为高分辨率图像的Y通道。该层卷积核大小为$f_3*f_3$</p>
+</li>
+</ol>
+<p><img src="/srcnn_net.png"></p>
+<h3 id="图片数据的预处理"><a href="#图片数据的预处理" class="headerlink" title="图片数据的预处理"></a>图片数据的预处理</h3><p>训练集和测试集的数据需要根据算法从图片中采集。</p>
+<p>因为进行卷积操作，输出的数据矩阵会比输入矩阵的维度小，所以标签数据要比上采样图像小<code>(f1//2 + f2//2 + f3//2)*2</code>。</p>
+<ul>
+<li><p>标签数据和上采样图像的来源</p>
+<p>​	将下载好的图片作为<strong>标签数据</strong>。</p>
+<p>​	<strong>上采样图像</strong>为原图通过双立方插值的方法，缩小$scale$倍再放大$scale$倍，得到的和原图大小相同的模糊图像。</p>
+</li>
+<li><p>处理方式</p>
+<p>​	将每张图片按照特定步长分割成小方块，上采样图像和标签图像的小方块一一对应，最后将所有数据打乱顺序，存储在本地文件中。使用相同的方式将不同的两组图片集分别做成<strong>训练集</strong>和<strong>测试集</strong>。</p>
+</li>
+</ul>
+<h2 id="算法分析"><a href="#算法分析" class="headerlink" title="算法分析"></a>算法分析</h2><ul>
+<li><p>数据预处理</p>
+<p>​	为了减少模型训练的时间，仅使用了一部分SRCNN官方论文提供的图片作为数据源。分别对其中的45张和77张进行了处理，生成两组训练数据集，分别为<code>train2.h5</code>，<code>train3.h5</code>。</p>
+<p>​	处理时，将每一张图片进行上采样，并将上采样结果拆分成许多$33<em>33$大小的方块作为训练集上采样图像。同时将原图对应位置的$33</em>33$方块中心的$21*21$大小的方块作为训练集的标签。两个对应的方块作为一对，最终将所有数据按照对为基本单位进行打乱，存储在hdf5文件中。其中33和21的大小设置参考的SRCNN论文，理论上大小是可以修改的，只要两者的差值等于<code>(f1//2 + f2//2 + f3//2)*2</code>即可。</p>
+<p>​	测试集数据的处理同上。使用的测试数据集为$Set5$。</p>
+</li>
+<li><p>训练模型</p>
+<p>​	首先使用pytorch进行卷积神经网络的搭建。因为卷积操作会缩小图片，在测试模型时，为了保证输入输出的维度大小一致，为卷积核增加了padding。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SRCNN</span>(nn.Module):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, isTrain</span>):</span><br><span class="line">        <span class="built_in">super</span>(SRCNN, self).__init__()</span><br><span class="line">        c = <span class="number">1</span></span><br><span class="line">        n1 = <span class="number">32</span></span><br><span class="line">        n2 = <span class="number">16</span></span><br><span class="line">        <span class="keyword">if</span> isTrain:</span><br><span class="line">            self.conv1 = nn.Conv2d(c, n1, <span class="number">9</span>)</span><br><span class="line">            self.conv2 = nn.Conv2d(n1, n2, <span class="number">1</span>)</span><br><span class="line">            self.conv3 = nn.Conv2d(n2, c, <span class="number">5</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.conv1 = nn.Conv2d(c, n1, <span class="number">9</span>, padding=<span class="number">9</span> // <span class="number">2</span>)</span><br><span class="line">            self.conv2 = nn.Conv2d(n1, n2, <span class="number">1</span>)</span><br><span class="line">            self.conv3 = nn.Conv2d(n2, c, <span class="number">5</span>, padding=<span class="number">5</span> // <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">        self.relu = nn.ReLU()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        x = self.relu(self.conv1(x))</span><br><span class="line">        x = self.relu(self.conv2(x))</span><br><span class="line">        x = self.conv3(x)</span><br><span class="line">        <span class="keyword">return</span> x</span><br></pre></td></tr></table></figure>
+
+<p>​	训练时，将训练集数据的batch大小设为128，测试集为2。模型的损失函数采用MSE函数。使用学习率为0.0001的Adam进行模型参数优化。</p>
+<p>​	因为训练模型花费时间过长，本次作业使用<code>train2.h5</code>分别进行了进行20轮和50轮训练，使用<code>train3.h5</code>进行5轮和30轮训练。其中<code>train3.h5</code>使用<code>n1=64,n2=32</code>来训练模型。</p>
+</li>
+<li><p>测试模型</p>
+<p>​	将图片使用立方插值的方式缩小，作为小图，原图片作为大图。只要使用原图与测试模型得到的放大结果计算PSNR值，即可量化模型的判断标准，并且可以与立方插值方法进行对比。其中需要注意的是，测试模型时为了保证得到的图片和原图大小一样，需要为卷积核设置padding，这是训练模型时不需要的。同时，因为放大图片会导致图片边缘的像素计算不准确，在计算PSNR时，需要根据放大倍数对图像的边界进行裁剪。令人感到遗憾的是，我训练出来的这几个模型，PSNR值均未超过双立方插值的。</p>
+</li>
+</ul>
+<h2 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h2><p>​	训练出的四个模型分别放在项目目录下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">model:sr3 使用n1=64 n2=32, train3.h5训练集 训练5轮，测试模型得到的PSNR值</span><br><span class="line">PSNR model: 30.78</span><br><span class="line">PSNR cubic: 31.16</span><br><span class="line">model:sr2 使用n1=32 n2=16, train3.h5训练集 训练30轮，测试模型得到的PSNR值</span><br><span class="line">PSNR model: 30.97</span><br><span class="line">PSNR cubic: 31.16</span><br><span class="line">model:sr1_1 使用n1=32 n2=16, train2.h5训练集 训练20轮，测试模型得到的PSNR值</span><br><span class="line">PSNR model: 30.22</span><br><span class="line">PSNR cubic: 31.16</span><br><span class="line">model:sr 使用n1=32 n2=16, train2.h5训练集 训练50轮，测试模型得到的PSNR值</span><br><span class="line">PSNR model: 30.63</span><br><span class="line">PSNR cubic: 31.16	</span><br></pre></td></tr></table></figure>
+
+<p>​	虽然模型的效果并不如二次立方插值，但是PSNR值在30以上，还算可以接受吧..</p>
+<ul>
+<li><p>原图</p>
+<p><img src="/bird_GT.bmp" alt="bird_GT"></p>
+</li>
+<li><p>放大3倍得到的图片</p>
+<p><img src="/bird_GT_zoom3.bmp" alt="bird_GT_zoom3"></p>
+</li>
+</ul>
+<h2 id="问题思考"><a href="#问题思考" class="headerlink" title="问题思考"></a>问题思考</h2><p>​	因为看论文中模型得到的结果还是很不错的，PSNR值能达到32.26，但是我的模型效果就没有那么好，最好的模型只有30.97，还不如双三次插值的效果好。分析影响模型效果的因素有：$n_1,n_2$的选取，模型训练的轮数，数据集的大小。虽然该神经网络模型只有三层，但由于没有找到适合本机的支持gpu的pytorch版本，训练模型使用cpu进行计算，速度很慢。为了减少时长，我并没有使用论文中提供的全部91张图片作为训练数据，也并没有采用论文中说的$n_1&#x3D;64,n_2&#x3D;32$来训练，而是减半。训练的轮数也并没有很多。可能这就是我的模型效果不好的原因吧。因为随着训练轮数的增加，PSNR数值的增长会变慢，所以为了得到论文中那样的结果，可能需要使用91张照片的全数据集训练上百轮或千轮才能得到。</p>
+<pre><code>参考论文：Chao DongChen Change LoyKaiming HeXiaoou Tang ：Learning a Deep Convolutional Network for Image Super-Resolution
+</code></pre>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/01/20/SRCNN/" data-id="clu4yxd1s0004lwv2f0mg470w" data-title="超分辨-SRCNN" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/" rel="tag">图像处理</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2021/05/19/css-%E5%9D%97%E7%BA%A7%E8%A1%8C%E5%86%85%E5%85%83%E7%B4%A0/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          css-块级行内元素
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/11/07/Java-%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E5%85%A5%E9%97%A8/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Java 面向对象入门</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/java%E5%AD%97%E8%8A%82%E7%A0%81%E5%A2%9E%E5%BC%BA/">java字节码增强</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/css/" rel="tag">css</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dom/" rel="tag">dom</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/instrument/" rel="tag">instrument</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javassist/" rel="tag">javassist</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%8D%E7%AB%AF/" rel="tag">前端</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%8D%E7%BC%80%E5%92%8C/" rel="tag">前缀和</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">卷积神经网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/" rel="tag">图像处理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag">学习笔记</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/" rel="tag">面向对象</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Java/" style="font-size: 10px;">Java</a> <a href="/tags/css/" style="font-size: 10px;">css</a> <a href="/tags/dom/" style="font-size: 10px;">dom</a> <a href="/tags/instrument/" style="font-size: 20px;">instrument</a> <a href="/tags/java/" style="font-size: 20px;">java</a> <a href="/tags/javassist/" style="font-size: 10px;">javassist</a> <a href="/tags/%E5%89%8D%E7%AB%AF/" style="font-size: 20px;">前端</a> <a href="/tags/%E5%89%8D%E7%BC%80%E5%92%8C/" style="font-size: 10px;">前缀和</a> <a href="/tags/%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">卷积神经网络</a> <a href="/tags/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/" style="font-size: 10px;">图像处理</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" style="font-size: 20px;">学习笔记</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 10px;">数据结构</a> <a href="/tags/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/" style="font-size: 10px;">面向对象</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">February 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">August 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">June 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">May 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">January 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">November 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/09/">September 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/02/10/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2021/08/05/dom%E5%B1%82%E7%BA%A7%E9%A1%BA%E5%BA%8F/">dom层级顺序</a>
+          </li>
+        
+          <li>
+            <a href="/2021/06/17/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/">树状数组</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/19/css-%E5%9D%97%E7%BA%A7%E8%A1%8C%E5%86%85%E5%85%83%E7%B4%A0/">css-块级行内元素</a>
+          </li>
+        
+          <li>
+            <a href="/2021/01/20/SRCNN/">超分辨-SRCNN</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
